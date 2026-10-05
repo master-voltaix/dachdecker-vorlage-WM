@@ -41,10 +41,71 @@ document.addEventListener('DOMContentLoaded', () => {
   go(0);
 
   // Einblenden beim Scrollen
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Kleinteile gestaffelt einblenden
+  ['.stat', '.checks li', '.faq details', '.quick-trust li', '.contact-info li', '.footer-top > div'].forEach(sel => {
+    const groups = new Map();
+    document.querySelectorAll(sel).forEach(el => {
+      const n = groups.get(el.parentNode) || 0;
+      groups.set(el.parentNode, n + 1);
+      el.classList.add('rv');
+      el.style.transitionDelay = n * 90 + 'ms';
+    });
+  });
+
+  // Überschriften in Wörter zerlegen
+  if (!calm) {
+    document.querySelectorAll('.h2, .cta h2, .contact-info h2, .form h2').forEach(h => {
+      h.innerHTML = h.textContent.trim().split(/\s+/).map((w, i) => `<span class="w"><span style="--i:${i}">${w}</span></span>`).join(' ');
+      h.classList.add('split', 'rv-h');
+    });
+  }
+
+  // Zahlen hochzählen
+  const countUp = el => {
+    const m = el.textContent.match(/^([\d.]+)(.*)$/);
+    if (!m || calm) return;
+    const end = +m[1].replace(/\./g, ''), t0 = performance.now(), dur = 1600;
+    const tick = t => {
+      const k = Math.min((t - t0) / dur, 1), v = Math.round(end * (1 - Math.pow(1 - k, 3)));
+      el.textContent = v.toLocaleString('de-DE') + m[2];
+      if (k < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  };
+
   const rv = new IntersectionObserver(entries => {
-    entries.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); rv.unobserve(en.target); } });
+    entries.forEach(en => {
+      if (!en.isIntersecting) return;
+      const el = en.target;
+      el.classList.add('in');
+      rv.unobserve(el);
+      if (el.classList.contains('stat')) countUp(el.querySelector('b'));
+      if (el.style.transitionDelay) setTimeout(() => { el.style.transitionDelay = ''; }, 1400);
+    });
   }, { threshold: .12 });
-  document.querySelectorAll('.rv').forEach(el => rv.observe(el));
+  document.querySelectorAll('.rv, .rv-h').forEach(el => rv.observe(el));
+
+  // Scroll-Fortschritt & Parallax im Videobild
+  const bar = document.createElement('div');
+  bar.className = 'progress';
+  document.body.append(bar);
+  const vid = document.querySelector('.video'), vidImg = vid.querySelector('img');
+  let ticking = false;
+  const onMove = () => {
+    ticking = false;
+    const max = document.documentElement.scrollHeight - innerHeight;
+    bar.style.transform = `scaleX(${max > 0 ? scrollY / max : 0})`;
+    if (calm) return;
+    const r = vid.getBoundingClientRect();
+    if (r.bottom > 0 && r.top < innerHeight) {
+      const k = (r.top + r.height / 2 - innerHeight / 2) / innerHeight;
+      vidImg.style.transform = `translateY(${(k * -8).toFixed(2)}%)`;
+    }
+  };
+  window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(onMove); } }, { passive: true });
+  onMove();
 
   // Video-Dialog (URL im data-video-Attribut des Play-Buttons hinterlegen)
   const modal = document.querySelector('.modal');
