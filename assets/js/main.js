@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Einblenden beim Scrollen
   const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (calm) document.querySelector('.hero-video').pause();
   ['.stat', '.checks li', '.faq details'].forEach(sel => {
     const groups = new Map();
     document.querySelectorAll(sel).forEach(el => {

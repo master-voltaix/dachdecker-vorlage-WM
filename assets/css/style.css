@@ -544,3 +544,5 @@ main { overflow-x: clip; }
   .js .about-copy.rv:not(.in), .js .faq-wrap > .rv:first-child:not(.in), .js .cta .rv:first-child:not(.in) { transform: translateX(-20px); }
   .js .why > .rv:last-child:not(.in), .js .faq.rv:not(.in), .js .cta-phone.rv:not(.in) { transform: translateX(20px); }
 }
+.hero .slide::after { background: linear-gradient(90deg, rgba(15, 16, 19, .88) 0%, rgba(15, 16, 19, .7) 45%, rgba(15, 16, 19, .42) 100%); }
+@media (max-width: 700px) { .hero .slide::after { background: rgba(15, 16, 19, .78); } }
